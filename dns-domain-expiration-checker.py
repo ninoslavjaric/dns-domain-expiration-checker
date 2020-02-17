@@ -21,8 +21,8 @@ import smtplib
 import dateutil.parser
 import subprocess
 from datetime import datetime
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEText import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 EXPIRE_STRINGS = [ "Registry Expiry Date:",
                    "Expiration:",
@@ -41,6 +41,7 @@ DEBUG = 0
 
 
 def debug(string_to_print):
+
     """
        Helper function to assist with printing debug messages.
     """
@@ -100,12 +101,13 @@ def parse_whois_data(whois_data):
     registrar = "Unknown"
 
     for line in whois_data.splitlines():
-        if any(expire_string in line for expire_string in EXPIRE_STRINGS):
-            expiration_date = dateutil.parser.parse(line.partition(": ")[2], ignoretz=True)
 
-        if any(registrar_string in line for registrar_string in
+        if any(expire_string in str(line) for expire_string in EXPIRE_STRINGS):
+            expiration_date = dateutil.parser.parse(str(line).partition(": ")[2], ignoretz=True)
+
+        if any(registrar_string in str(line) for registrar_string in
                REGISTRAR_STRINGS):
-            registrar = line.split("Registrar:")[1].strip()
+            registrar = str(line).split("Registrar:")[1].strip()
 
     return expiration_date, registrar
 
@@ -117,12 +119,14 @@ def calculate_expiration_days(expire_days, expiration_date):
     debug("Expiration date %s Time now %s" % (expiration_date, datetime.now()))
 
     try:
+        if isinstance(expiration_date, str):
+            return 0
         domain_expire = expiration_date - datetime.now()
     except:
         print("Unable to calculate the expiration days")
         sys.exit(1)
 
-    if domain_expire.days < expire_days:
+    if domain_expire.days < int(expire_days):
         return domain_expire.days
     else:
         return 0
