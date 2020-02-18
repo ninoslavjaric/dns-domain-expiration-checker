@@ -103,7 +103,9 @@ def parse_whois_data(whois_data):
     for line in whois_data.splitlines():
 
         if any(expire_string in str(line) for expire_string in EXPIRE_STRINGS):
-            expiration_date = dateutil.parser.parse(str(line).partition(": ")[2], ignoretz=True)
+            string=str(line).partition(": ")[2].rstrip("\\'") or False
+            if (string != False):
+                expiration_date = dateutil.parser.parse(string, ignoretz=True)
 
         if any(registrar_string in str(line) for registrar_string in
                REGISTRAR_STRINGS):
@@ -126,9 +128,10 @@ def calculate_expiration_days(expire_days, expiration_date):
         print("Unable to calculate the expiration days")
         sys.exit(1)
 
-    if domain_expire.days < int(expire_days):
+    if domain_expire.days > 0:
         return domain_expire.days
     else:
+        krk = domain_expire.days
         return 0
 
 
